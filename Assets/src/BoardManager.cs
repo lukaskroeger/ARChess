@@ -31,7 +31,7 @@ public class BoardManager : MonoBehaviour
     // List for raycast hits is re-used by raycast manager
     private static readonly List<ARRaycastHit> Hits = new List<ARRaycastHit>();
 
-    private Chessman.Chessman[,] _gamePositions;
+    internal static Chessman.Chessman[,] GamePositions;
 
     private bool placeMode;
 
@@ -47,11 +47,12 @@ public class BoardManager : MonoBehaviour
     void Start()
     {
         Screen.sleepTimeout = SleepTimeout.NeverSleep;
-        _gamePositions = new Chessman.Chessman[8, 8];
+        GamePositions = new Chessman.Chessman[8, 8];
         PlaceWhiteChessman();
         PlaceBlackChessman();
         placeMode = true;
     }
+       
 
     private void PlaceBlackChessman()
     {
@@ -102,7 +103,7 @@ public class BoardManager : MonoBehaviour
         PlaceChessman(new Knight() { Color = ChessmanColor.White }, _chessmanPrefabsWhite[4], 6, 0);
 
         //pawns:
-        for(int i = 0; i < 8; i++)
+        for (int i = 0; i < 8; i++)
         {
             PlaceChessman(new Pawn() { Color = ChessmanColor.White }, _chessmanPrefabsWhite[5], i, 1);
         }
@@ -113,7 +114,7 @@ public class BoardManager : MonoBehaviour
     {
         var rotation = chessman.Color == ChessmanColor.White ? 0 : 180;
         chessman.GameObject = Instantiate(prefab, new Vector3(x * TILE_SIZE, 0, y * TILE_SIZE), Quaternion.Euler(0, rotation, 0), _boradGameObject.transform);
-        _gamePositions[x, y] = chessman;
+        chessman.InitialPlace(x, y);
     }
 
     // Update is called once per frame
@@ -140,10 +141,9 @@ public class BoardManager : MonoBehaviour
                 _raycastManager.Raycast(screenCenter, Hits, TrackableType.PlaneWithinBounds);
                 CreateAnchor(Hits[0]);
                 placeMode = false;
+                return;
             }
-
-            HandleChessboardTouch(touch);
-            
+            HandleChessboardTouch(touch);            
         }
     }
     
@@ -178,26 +178,23 @@ public class BoardManager : MonoBehaviour
             if (touch.phase == TouchPhase.Began)
             {
                 _selectedPosition = GetBoardPoint(touchHit.point);
+                ShowAvailableMoves();
             }
             else if (touch.phase == TouchPhase.Moved && _selectedPosition != null)
             {
-                _gamePositions[(int)_selectedPosition?.x, (int)_selectedPosition?.y].GameObject.transform.position = touchHit.point;
+                GamePositions[(int)_selectedPosition?.x, (int)_selectedPosition?.y]?.Move(touchHit.point);
             }
             else if (touch.phase == TouchPhase.Ended && _selectedPosition != null)
             {
-                var endPoint = GetBoardPoint(touchHit.point);
-                _gamePositions[endPoint.x, endPoint.y] = _gamePositions[(int)_selectedPosition?.x, (int)_selectedPosition?.y];
-                _gamePositions[endPoint.x, endPoint.y].GameObject.transform.localPosition = new Vector3(endPoint.x, 0, endPoint.y);
-                _gamePositions[(int)_selectedPosition?.x, (int)_selectedPosition?.y] = null;
-                _selectedPosition = null;
+                GamePositions[(int)_selectedPosition?.x, (int)_selectedPosition?.y]?.Place(GetBoardPoint(touchHit.point));
             }
         }
     }
    
-    internal void ShowAvailableMoves() { }
-    internal void MoveChessman() { }
-    internal bool IsMovePossible() { return false; }
-    internal void CaptureChessman() { }
-    internal bool IsCapturePossible() { return false; }
+    internal void ShowAvailableMoves()
+    {
+    }    
+
+    
 }
 
