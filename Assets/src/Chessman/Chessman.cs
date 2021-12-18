@@ -24,7 +24,6 @@ namespace Chessman
                 return _availableMoves;
             }
         }
-
         protected virtual void RefreshAvailableMoves()
         {
         }
@@ -67,7 +66,8 @@ namespace Chessman
 
         protected bool AddLegalMoveIfPossible(int x, int y)
         {
-            (int x, int y) currentPoint = (CurrentX + x, CurrentY + y);
+            int rotationMultiplyer = Color == ChessmanColor.White ? 1 : -1;
+            (int x, int y) currentPoint = (CurrentX + x * rotationMultiplyer, CurrentY + y * rotationMultiplyer);
             if (currentPoint.x >= 0 && currentPoint.x <= 7 && currentPoint.y >= 0 && currentPoint.y <= 7)
             {
                 var chessmanAtPosition = BoardManager.GamePositions[currentPoint.x, currentPoint.y];
